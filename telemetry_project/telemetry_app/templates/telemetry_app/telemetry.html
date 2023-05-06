@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telemetry</title>
+    <script src="{% static 'js/chart.umd.js' %}"></script>
+</head>
+<body>
+    <canvas id="lapTimeChart" width="400" height="200"></canvas>
+    <script>
+        window.onload = function() {
+            var ctx = document.getElementById('lapTimeChart').getContext('2d');
+            var lapTimes = {{ lap_times|safe }};
+            var data = {
+                labels: Array.from({length: Math.max(...Object.values(lapTimes).map(laps => laps.length))}, (_, i) => i + 1),
+                datasets: Object.entries(lapTimes).map(([carNumber, times]) => ({
+                    label: `Car #${carNumber}`,
+                    data: times,
+                    borderColor: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                    fill: false,
+                })),
+            };
+            var options = {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            };
+            var myChart = new Chart(ctx, {
+                type: 'line',
+                data: data,
+                options: options,
+            });
+        }
+    </script>
+</body>
+</html>
