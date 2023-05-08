@@ -1,39 +1,61 @@
+<!-- telemetry.html -->
+{% load static %}
+{% load custom_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telemetry</title>
+    <title>Telemetry Data</title>
     <script src="{% static 'js/chart.umd.js' %}"></script>
 </head>
 <body>
-    <canvas id="lapTimeChart" width="400" height="200"></canvas>
+    <canvas id="lapTimeChart"></canvas>
+    <div id="lapTimeData" style="display:none;" data-lap-times="{{ lap_times|to_json }}"></div>
     <script>
-        window.onload = function() {
-            var ctx = document.getElementById('lapTimeChart').getContext('2d');
-            var lapTimes = {{ lap_times|safe }};
-            var data = {
-                labels: Array.from({length: Math.max(...Object.values(lapTimes).map(laps => laps.length))}, (_, i) => i + 1),
-                datasets: Object.entries(lapTimes).map(([carNumber, times]) => ({
-                    label: `Car #${carNumber}`,
-                    data: times,
-                    borderColor: `hsl(${Math.random() * 360}, 100%, 50%)`,
-                    fill: false,
-                })),
-            };
-            var options = {
-                scales: {
-                    y: {
-                        beginAtZero: true
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('{{ lap_times|escapejs }}');
+        const lapTimesJson = '{{ lap_times|escapejs }}'.replace(/None/g, 'null');
+        console.log('Lap times JSON:', lapTimesJson); // Log the lap times JSON string
+        const lapTimes = JSON.parse(lapTimesJson) || {};
+        console.log('Lap times:', lapTimes); // Log the lap times object
+
+        // Check if the lapTimes object is empty
+        if (Object.keys(lapTimes).length === 0) {
+            console.error('No lap data found for the selected race.');
+        } else {
+            // Check if specific car data is missing
+            const requiredCars = Array.from({ length: 65 }, (_, i) => i);
+            requiredCars.forEach((carNumber) => {
+                if (!(carNumber in lapTimes)) {
+                    console.error(`No lap data found for car number ${carNumber}`);
+                }
+            });
+
+            // Initialize the labels and datasets variables for the chart
+            const labels = []; // This should be an array of labels for the X-axis (e.g., lap numbers)
+            const datasets = []; // This should be an array of datasets, one for each car
+
+            // Populate the labels and datasets with the appropriate data from the lapTimes object
+            // ... (You will need to write the code for this part)
+
+            // Create the chart
+            const chart = new Chart(document.getElementById('lapTimeChart').getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
                     }
                 }
-            };
-            var myChart = new Chart(ctx, {
-                type: 'line',
-                data: data,
-                options: options,
             });
         }
+    });
     </script>
 </body>
 </html>
