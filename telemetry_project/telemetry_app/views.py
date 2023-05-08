@@ -3,7 +3,7 @@ from firebase_admin import db
 import json
 
 def telemetry(request):
-    ref = db.reference("races/202352116/competitorData")
+    ref = db.reference("racesTest/205313831/competitorData")
     competitor_data = ref.get()
 
     lap_times = {}

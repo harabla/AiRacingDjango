@@ -15,31 +15,44 @@
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         console.log('{{ lap_times|escapejs }}');
-        const lapTimesJson = '{{ lap_times|escapejs }}'.replace(/None/g, 'null');
-        console.log('Lap times JSON:', lapTimesJson); // Log the lap times JSON string
+        const lapTimesJson = '{{ lap_times|escapejs }}'.replace(/None/g, 'null').replace(/'/g, '"');
+        console.log('Lap times JSON:', lapTimesJson);
         const lapTimes = JSON.parse(lapTimesJson) || {};
-        console.log('Lap times:', lapTimes); // Log the lap times object
+        console.log('Lap times:', lapTimes);
 
-        // Check if the lapTimes object is empty
         if (Object.keys(lapTimes).length === 0) {
             console.error('No lap data found for the selected race.');
         } else {
-            // Check if specific car data is missing
             const requiredCars = Array.from({ length: 65 }, (_, i) => i);
             requiredCars.forEach((carNumber) => {
                 if (!(carNumber in lapTimes)) {
-                    console.error(`No lap data found for car number ${carNumber}`);
+                    console.warn(`No lap data found for car number ${carNumber}`);
                 }
             });
 
-            // Initialize the labels and datasets variables for the chart
-            const labels = []; // This should be an array of labels for the X-axis (e.g., lap numbers)
-            const datasets = []; // This should be an array of datasets, one for each car
+            const labels = [];
+            const datasets = [];
 
-            // Populate the labels and datasets with the appropriate data from the lapTimes object
-            // ... (You will need to write the code for this part)
+            // Assuming that lapTimes has the same number of laps for each car
+            const firstCarNumber = Object.keys(lapTimes)[0];
+            const numberOfLaps = lapTimes[firstCarNumber].length;
 
-            // Create the chart
+            for (let i = 0; i < numberOfLaps; i++) {
+                labels.push(`Lap ${i + 1}`);
+            }
+
+            for (const carNumber in lapTimes) {
+                const carLapTimes = lapTimes[carNumber];
+                const carDataset = {
+                    label: `Car ${carNumber}`,
+                    data: carLapTimes,
+                    borderColor: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                    borderWidth: 1,
+                    fill: false,
+                };
+                datasets.push(carDataset);
+            }
+
             const chart = new Chart(document.getElementById('lapTimeChart').getContext('2d'), {
                 type: 'line',
                 data: {
@@ -56,6 +69,7 @@
             });
         }
     });
+
     </script>
 </body>
 </html>
