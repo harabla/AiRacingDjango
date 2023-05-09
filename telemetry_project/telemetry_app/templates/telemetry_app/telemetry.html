@@ -15,7 +15,7 @@
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         console.log('{{ lap_times|escapejs }}');
-        const lapTimesJson = '{{ lap_times|escapejs }}'.replace(/None/g, 'null').replace(/'/g, '"');
+        const lapTimesJson = '{{ lap_times|escapejs }}';
         console.log('Lap times JSON:', lapTimesJson);
         const lapTimes = JSON.parse(lapTimesJson) || {};
         console.log('Lap times:', lapTimes);
