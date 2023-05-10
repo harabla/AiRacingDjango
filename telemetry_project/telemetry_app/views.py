@@ -2,35 +2,48 @@ from django.shortcuts import render
 from firebase_admin import db
 import json
 
-def telemetry(request):
-    # Get the race ID from the request's GET parameters, use a default value if not provided
-    race_id = request.GET.get('raceID', '205425727')
+def process_data(data):
+    if isinstance(data, dict):
+        filtered_data = {k: v for k, v in data.items() if v != -1}
 
-    # Update the reference with the race ID
+        if all(isinstance(key, str) and key.isdigit() for key in filtered_data.keys()):
+            max_key = max(map(int, filtered_data.keys()))
+            data_list = [None] * (max_key + 1)
+            for key, value in filtered_data.items():
+                data_list[int(key)] = value
+            return data_list
+        else:
+            return filtered_data
+
+    elif isinstance(data, list):
+        return data
+
+    else:
+        return {}
+
+def get_chart_data(request, field_name):
+    race_id = request.GET.get('raceID', '205425727')
     ref = db.reference(f"racesTest2/{race_id}/competitorData")
     competitor_data = ref.get()
 
-    lap_times = {}
+    chart_data = {}
     if competitor_data is not None:
         for index, car_data in enumerate(competitor_data):
             car_number = index + 1
-            if isinstance(car_data, dict) and 'RACE' in car_data and 'lapTimes' in car_data['RACE']:
-                lap_time_data = car_data['RACE']['time']
+            if isinstance(car_data, dict) and 'RACE' in car_data and field_name in car_data['RACE']:
+                raw_data = car_data['RACE'][field_name]
+                processed_data = process_data(raw_data)
+                chart_data[car_number] = processed_data
 
-                # Filter out -1 values
-                filtered_lap_time_data = {k: v for k, v in lap_time_data.items() if v != -1}
+    corrected_chart_data = json.dumps(chart_data, default=str).replace("'", '"')
+    return corrected_chart_data
 
-                # Check if filtered_lap_time_data is a dictionary with numeric keys and convert it to a list
-                if isinstance(filtered_lap_time_data, dict) and all(isinstance(key, str) and key.isdigit() for key in filtered_lap_time_data.keys()):
-                    max_key = max(map(int, filtered_lap_time_data.keys()))
-                    lap_time_list = [None] * (max_key + 1)
-                    for key, value in filtered_lap_time_data.items():
-                        lap_time_list[int(key)] = value
-                    lap_times[car_number] = lap_time_list
-                else:
-                    lap_times[car_number] = filtered_lap_time_data
+# in the views.py file
+def telemetry(request):
+    position = get_chart_data(request, 'position')
+    lap_times = get_chart_data(request, 'lapTimes')
+    air_temp = get_chart_data(request, 'airTemp')
+    track_temp = get_chart_data(request, 'trackTemp')
+    class_position = get_chart_data(request, 'classPosition')
+    return render(request, 'telemetry_app/telemetry.html', {'lap_times': lap_times, 'position': position, 'air_temp': air_temp, 'track_temp': track_temp, 'class_position': class_position})
 
-    # Correct the JSON data before passing it to the template
-    corrected_lap_times = json.dumps(lap_times, default=str).replace("'", '"')
-
-    return render(request, 'telemetry_app/telemetry.html', {'lap_times': corrected_lap_times})
