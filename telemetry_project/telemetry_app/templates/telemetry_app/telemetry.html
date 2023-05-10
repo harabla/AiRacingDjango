@@ -10,6 +10,15 @@
     <script src="{% static 'js/chart.umd.js' %}"></script>
 </head>
 <body>
+
+    <form id="raceIDForm" method="get">
+      <label for="raceID">Race ID:</label>
+      <input type="text" id="raceID" name="raceID" required>
+      <button type="submit">Load Race</button>
+    </form>
+
+
+
     <canvas id="lapTimeChart"></canvas>
     <div id="lapTimeData" style="display:none;" data-lap-times="{{ lap_times|to_json }}"></div>
     <script>
