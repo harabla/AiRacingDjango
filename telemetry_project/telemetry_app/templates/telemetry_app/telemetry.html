@@ -23,6 +23,15 @@
   <!-- Option elements for car numbers will be added dynamically -->
 </select>
 
+<!-- Add these input fields to your HTML -->
+<input id="lapTimeChartMax" type="number" value="150">
+<input id="positionChartMax" type="number" value="35">
+<input id="airTempChartMax" type="number" value="40">
+<input id="trackTempChartMax" type="number" value="60">
+<input id="classPositionChartMax" type="number" value="10">
+<input id="timeChartMax" type="number" value="100">
+
+
 <div class="chart-container">
     <canvas id="lapTimeChart"></canvas>
 </div>
@@ -98,15 +107,54 @@
 
 
 
-            chartJSProcessing(lapTimes, 'lapTimeChart', 150);
-            chartJSProcessing(position, 'positionChart', 35);  // assuming 'positionChart' and 50
-            chartJSProcessing(airTemp, 'airTempChart', 40);  // assuming 'airTempChart' and 40
-            chartJSProcessing(trackTemp, 'trackTempChart', 60);  // assuming 'trackTempChart' and 60
-            chartJSProcessing(classPosition, 'classPositionChart', 10);  // assuming 'classPositionChart' and 10
-            chartJSProcessing(time, 'timeChart', 100);  // assuming 'timeChart' and 100
+            // Get the input field values when calling the function
+             const lapTimeChartMax = parseInt(document.getElementById('lapTimeChartMax').value);
+            const positionChartMax = parseInt(document.getElementById('positionChartMax').value);
+            const airTempChartMax = parseInt(document.getElementById('airTempChartMax').value);
+            const trackTempChartMax = parseInt(document.getElementById('trackTempChartMax').value);
+            const classPositionChartMax = parseInt(document.getElementById('classPositionChartMax').value);
+            const timeChartMax = parseInt(document.getElementById('timeChartMax').value);
+
+            chartJSProcessing(lapTimes, 'lapTimeChart', lapTimeChartMax, "Laptime Chart");
+            chartJSProcessing(position, 'positionChart', positionChartMax, "Position Chart");
+            chartJSProcessing(airTemp, 'airTempChart', airTempChartMax, "Airtemps from all cars");
+            chartJSProcessing(trackTemp, 'trackTempChart', trackTempChartMax, "Tracktemps from all cars");
+            chartJSProcessing(classPosition, 'classPositionChart', classPositionChartMax, "Class positions");
+            chartJSProcessing(time, 'timeChart', timeChartMax, "Time from leader");
+
+            // Attach the onchange events
+            document.getElementById('lapTimeChartMax').onchange = function() {
+                const newMax = parseInt(this.value);
+                chartJSProcessing(lapTimes, 'lapTimeChart', newMax, "Laptime Chart");
+            }
+
+            document.getElementById('positionChartMax').onchange = function() {
+                const newMax = parseInt(this.value);
+                chartJSProcessing(position, 'positionChart', newMax, "Position Chart");
+            }
+
+            document.getElementById('airTempChartMax').onchange = function() {
+                const newMax = parseInt(this.value);
+                chartJSProcessing(airTemp, 'airTempChart', newMax, "Airtemps from all cars");
+            }
+
+            document.getElementById('trackTempChartMax').onchange = function() {
+                const newMax = parseInt(this.value);
+                chartJSProcessing(trackTemp, 'trackTempChart', newMax, "Tracktemps from all cars");
+            }
+
+            document.getElementById('classPositionChartMax').onchange = function() {
+                const newMax = parseInt(this.value);
+                chartJSProcessing(classPosition, 'classPositionChart', newMax, "Class positions");
+            }
+
+            document.getElementById('timeChartMax').onchange = function() {
+                const newMax = parseInt(this.value);
+                chartJSProcessing(time, 'timeChart', newMax, "Time from leader");
+            }
 
 
-         }
+        }
 
 
     </script>

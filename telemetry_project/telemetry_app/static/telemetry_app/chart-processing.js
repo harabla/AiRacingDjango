@@ -1,4 +1,6 @@
-function chartJSProcessing(data, chartId, yAxisMax) {
+let charts = {};  // Global variable to store chart instances
+
+function chartJSProcessing(data, chartId, yAxisMax, chartTitle) { // <- Add chartTitle parameter here
     const carSelector = document.getElementById('car-selector');
 
     // Remove all options from the previous race
@@ -59,6 +61,12 @@ function chartJSProcessing(data, chartId, yAxisMax) {
             }
         }
 
+        // Destroy the previous instance of the chart if it exists
+        if (charts[chartId]) {
+            charts[chartId].destroy();
+        }
+
+        // Create a new chart and store it in the charts variable
         const chart = new Chart(document.getElementById(chartId).getContext('2d'), {
             type: 'line',
             data: {
@@ -79,9 +87,20 @@ function chartJSProcessing(data, chartId, yAxisMax) {
                         max: yAxisMax
                     },
                 },
+                plugins: {
+                    title: { // <- Use chartTitle parameter here
+                        display: true,
+                        text: chartTitle,
+                        font: {
+                            size: 16,
+                            color: '#000',
+                        },
+                    },
+                },
             },
         });
 
+        charts[chartId] = chart;
 
                 // Add an event listener to the dropdown
         carSelector.addEventListener('change', function() {
