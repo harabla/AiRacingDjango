@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from firebase_admin import db
-import json
 
 def process_data(data):
     if isinstance(data, dict):
@@ -35,15 +34,20 @@ def get_chart_data(request, field_name):
                 processed_data = process_data(raw_data)
                 chart_data[car_number] = processed_data
 
-    corrected_chart_data = json.dumps(chart_data, default=str).replace("'", '"')
-    return corrected_chart_data
+    return chart_data
 
-# in the views.py file
 def telemetry(request):
     position = get_chart_data(request, 'position')
     lap_times = get_chart_data(request, 'lapTimes')
     air_temp = get_chart_data(request, 'airTemp')
     track_temp = get_chart_data(request, 'trackTemp')
     class_position = get_chart_data(request, 'classPosition')
-    return render(request, 'telemetry_app/telemetry.html', {'lap_times': lap_times, 'position': position, 'air_temp': air_temp, 'track_temp': track_temp, 'class_position': class_position})
-
+    time = get_chart_data(request, 'time')
+    return render(request, 'telemetry_app/telemetry.html', {
+        'lap_times': lap_times,
+        'position': position,
+        'air_temp': air_temp,
+        'track_temp': track_temp,
+        'class_position': class_position,
+        'time': time,
+    })
