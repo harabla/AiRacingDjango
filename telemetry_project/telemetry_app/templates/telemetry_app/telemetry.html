@@ -12,11 +12,15 @@
 
 </head>
 <body>
-    <form id="raceIDForm" method="get">
-        <label for="raceID">Race ID:</label>
-        <input type="text" id="raceID" name="raceID" required>
-        <button type="submit">Load Race</button>
-    </form>
+<form method="get">
+    <select name="raceID">
+        {% for race_id in race_ids %}
+            <option value="{{ race_id }}" {% if race_id == request.GET.raceID %}selected{% endif %}>{{ race_id }}</option>
+        {% endfor %}
+    </select>
+    <input type="submit" value="Load telemetry data">
+</form>
+
 
     <select id="car-selector">
   <option value="">Select a car</option>
@@ -153,10 +157,45 @@
                 chartJSProcessing(time, 'timeChart', newMax, "Time from leader");
             }
 
+            refreshData();
+
 
         }
 
+        function refreshData() {
+            fetch(window.location.href)
+                .then(response => response.text())
+                .then(html => {
+                    const newDocument = new DOMParser().parseFromString(html, "text/html");
+
+                    // Check if each element exists in the new document
+                    const raceForm = newDocument.getElementById("race-form");
+                    console.log('raceForm:', raceForm);
+                    if (raceForm) {
+                        document.getElementById("race-form").innerHTML = raceForm.innerHTML;
+                    }
+
+                    const ids = ["lapTimeData", "positionData", "airTempData", "trackTempData", "classPositionData", "timeData"];
+                    for (let id of ids) {
+                        const element = newDocument.getElementById(id);
+                        console.log(`${id}:`, element);
+                        if (element) {
+                            document.getElementById(id).innerHTML = element.innerHTML;
+                        }
+                    }
+
+                    setTimeout(refreshData, 15000);
+                });
+        }
+
+
+
+
+
+
 
     </script>
+
+
 </body>
 </html>

@@ -24,8 +24,7 @@ def process_data(data):
     else:
         return {}
 
-def get_chart_data(request, field_name):
-    race_id = request.GET.get('raceID', '205425727')
+def get_chart_data(request, field_name, race_id):
     ref = db.reference(f"racesTest2/{race_id}/competitorData")
     competitor_data = ref.get()
 
@@ -44,14 +43,16 @@ def get_chart_data(request, field_name):
 
 
 def telemetry(request):
-    position = get_chart_data(request, 'position')
-    lap_times = get_chart_data(request, 'lapTimes')
-    air_temp = get_chart_data(request, 'airTemp')
-    track_temp = get_chart_data(request, 'trackTemp')
-    class_position = get_chart_data(request, 'classPosition')
-    time = get_chart_data(request, 'time')  # fetch time data
+    race_ids = get_race_ids()
+    race_id = request.GET.get('raceID', race_ids[0] if race_ids else '205425727')
 
-    # include time data in the context data
+    position = get_chart_data(request, 'position', race_id)
+    lap_times = get_chart_data(request, 'lapTimes', race_id)
+    air_temp = get_chart_data(request, 'airTemp', race_id)
+    track_temp = get_chart_data(request, 'trackTemp', race_id)
+    class_position = get_chart_data(request, 'classPosition', race_id)
+    time = get_chart_data(request, 'time', race_id)  # fetch time data
+
     return render(request, 'telemetry_app/telemetry.html', {
         'lap_times': lap_times,
         'position': position,
@@ -59,4 +60,16 @@ def telemetry(request):
         'track_temp': track_temp,
         'class_position': class_position,
         'time': time,
+        'race_ids': race_ids,
+    })
+
+def get_race_ids():
+    ref = db.reference("racesTest2")
+    races = ref.get()
+    return list(races.keys()) if races else []
+
+def index(request):
+    race_ids = get_race_ids()
+    return render(request, 'telemetry_app/index.html', {
+        'race_ids': race_ids,
     })
