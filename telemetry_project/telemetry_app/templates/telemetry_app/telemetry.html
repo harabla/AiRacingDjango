@@ -8,6 +8,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Telemetry Data</title>
     <script src="{% static 'chart.js/dist/chart.umd.js' %}"></script>
+    <script src="{% static 'telemetry_app/chart-processing.js' %}"></script>
+
 </head>
 <body>
     <form id="raceIDForm" method="get">
@@ -36,12 +38,19 @@
     <canvas id="classPositionChart"></canvas>
 </div>
 
+<div class="chart-container">
+    <canvas id="timeChart"></canvas>
+</div>
+
 
 <div id="lapTimeData" style="display:none;" data-lap-times="{{ lap_times|to_json }}"></div>
 <div id="positionData" style="display:none;" data-position="{{ position|to_json }}"></div>
 <div id="airTempData" style="display:none;" data-air-temp="{{ air_temp|to_json }}"></div>
 <div id="trackTempData" style="display:none;" data-track-temp="{{ track_temp|to_json }}"></div>
 <div id="classPositionData" style="display:none;" data-class-position="{{ class_position|to_json }}"></div>
+<div id="timeData" style="display:none;" data-time="{{ time|to_json }}"></div>
+
+
 
 
     <script>
@@ -76,326 +85,20 @@
             const classPosition = JSON.parse(classPositionJson) || {};
             console.log('Class position:', classPosition);
 
-            // process lap times data
-            if (Object.keys(lapTimes).length === 0) {
-                console.error('No lap data found for the selected race.');
-            } else {
-                const requiredCars = Array.from({ length: 65 }, (_, i) => i);
-                requiredCars.forEach((carNumber) => {
-                    if (!(carNumber in lapTimes)) {
-                        console.warn(`No lap data found for car number ${carNumber}`);
-                    }
-                });
-
-                const lapTimeLabels = [];
-                const lapTimeDatasets = [];
-
-                // Assuming that lapTimes has the same number of laps for each car
-                const firstCarNumber = Object.keys(lapTimes)[0];
-                const numberOfLaps = lapTimes[firstCarNumber].length;
-
-                for (let i = 0; i < numberOfLaps; i++) {
-                    lapTimeLabels.push(`Lap ${i + 1}`);
-                }
-
-                for (const carNumber in lapTimes) {
-                    const carLapTimes = lapTimes[carNumber];
-                    const carDataset = {
-                        label: `Car ${carNumber}`,
-                        data: [],
-                        borderColor: `hsl(${Math.random() * 360}, 100%, 50%)`,
-                        borderWidth: 1,
-                        fill: false,
-                    };
-                    lapTimeDatasets.push(carDataset);
-
-                    for (let i = 0; i < carLapTimes.length; i++) {
-                        setTimeout(() => {
-                            carDataset.data.push(carLapTimes[i]);
-                            lapTimeChart.update();
-                        }, i * 300 + lapTimeDatasets.length * 100);
-                    }
-                }
-
-                const lapTimeChart = new Chart(document.getElementById('lapTimeChart').getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: lapTimeLabels,
-                        datasets: lapTimeDatasets,
-                    },
-                    options: {
-                        animation: {
-                            onComplete: () => {
-                                delayed = true;
-                            },
-                            delay: (context) => {
-                                let delay = 0;
-                                if (context.type === 'data' && context.mode === 'default' && !delayed) {
-                                    delay = context.dataIndex * 300 + context.datasetIndex * 100;
-                                }
-                                return delay;
-                            },
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: false,
-                                max: 150
-                            },
-                        },
-                    },
-                });
-            }
+            console.log('{{ time|escapejs }}');
+            const timeJson = '{{ time|escapejs }}';
+            console.log('Time JSON:', timeJson);
+            const time = JSON.parse(timeJson) || {};
+            console.log('Time:', time);
 
 
-            // process position data
-            if (Object.keys(position).length === 0) {
-                console.error('No position data found for the selected race.');
-            } else {
-                const requiredCars = Array.from({ length: 65 }, (_, i) => i);
-                requiredCars.forEach((carNumber) => {
-                    if (!(carNumber in position)) {
-                        console.warn(`No position data found for car number ${carNumber}`);
-                    }
-                });
 
-                const positionLabels = [];
-                const positionDatasets = [];
-
-                // Assuming that position has the same number of position for each car
-                const firstCarNumber = Object.keys(position)[0];
-                const numberOfPosition = position[firstCarNumber].length;
-
-                for (let i = 0; i < numberOfPosition; i++) {
-                    positionLabels.push(`Position ${i + 1}`);
-                }
-
-                for (const carNumber in position) {
-                    const carPosition = position[carNumber];
-                    const carDataset = {
-                        label: `Car ${carNumber}`,
-                        data: carPosition,
-                        borderColor: `hsl(${Math.random() * 360}, 100%, 50%)`,
-                        borderWidth: 1,
-                        fill: false,
-                    };
-                    positionDatasets.push(carDataset);
-                }
-
-                const positionChart = new Chart(document.getElementById('positionChart').getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: positionLabels,
-                        datasets: positionDatasets
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
-            }
-
-            // process air temperature data
-            if (Object.keys(airTemp).length === 0) {
-                console.error('No air temperature data found for the selected race.');
-            } else {
-                const requiredCars = Array.from({ length: 65 }, (_, i) => i);
-                requiredCars.forEach((carNumber) => {
-                    if (!(carNumber in airTemp)) {
-                        console.warn(`No air temperature data found for car number ${carNumber}`);
-                    }
-                });
-
-                const airTempLabels = [];
-                const airTempDatasets = [];
-
-                // Assuming that airTemp has the same number of temperature values for each car
-                const firstCarNumber = Object.keys(airTemp)[0];
-                const numberOfTemps = airTemp[firstCarNumber].length;
-
-                for (let i = 0; i < numberOfTemps; i++) {
-                    airTempLabels.push(`Temperature ${i + 1}`);
-                }
-
-                for (const carNumber in airTemp) {
-                    const carTemps = airTemp[carNumber];
-                    const carDataset = {
-                        label: `Car ${carNumber}`,
-                        data: carTemps,
-                        borderColor: `hsl(${Math.random() * 360}, 100%, 50%)`,
-                        borderWidth: 1,
-                        fill: false,
-                    };
-                    airTempDatasets.push(carDataset);
-                }
-
-                const airTempChart = new Chart(document.getElementById('airTempChart').getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: airTempLabels,
-                        datasets: airTempDatasets
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
-            }
-
-            // process track temperature data
-            if (Object.keys(trackTemp).length === 0) {
-                console.error('No track temperature data found for the selected race.');
-            } else {
-                const requiredCars = Array.from({ length: 65 }, (_, i) => i);
-                requiredCars.forEach((carNumber) => {
-                    if (!(carNumber in trackTemp)) {
-                        console.warn(`No track temperature data found for car number ${carNumber}`);
-                    }
-                });
-
-                const trackTempLabels = [];
-                const trackTempDatasets = [];
-
-                // Assuming that trackTemp has the same number of temperature values for each car
-                const firstCarNumber = Object.keys(trackTemp)[0];
-                const numberOfTemps = trackTemp[firstCarNumber].length;
-
-                for (let i = 0; i < numberOfTemps; i++) {
-                    trackTempLabels.push(`Temperature ${i + 1}`);
-                }
-
-                for (const carNumber in trackTemp) {
-                    const carTemps = trackTemp[carNumber];
-                    const carDataset = {
-                        label: `Car ${carNumber}`,
-                        data: carTemps,
-                        borderColor: `hsl(${Math.random() * 360}, 100%, 50%)`,
-                        borderWidth: 1,
-                        fill: false,
-                    };
-                    trackTempDatasets.push(carDataset);
-                }
-
-                const trackTempChart = new Chart(document.getElementById('trackTempChart').getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: trackTempLabels,
-                        datasets: trackTempDatasets
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
-            }
-
-            // process time data
-            if (Object.keys(time).length === 0) {
-                console.error('No time data found for the selected race.');
-            } else {
-                const requiredCars = Array.from({ length: 65 }, (_, i) => i);
-                requiredCars.forEach((carNumber) => {
-                    if (!(carNumber in time)) {
-                        console.warn(`No time data found for car number ${carNumber}`);
-                    }
-                });
-
-                const timeLabels = [];
-                const timeDatasets = [];
-
-                // Assuming that time has the same number of time values for each car
-                const firstCarNumber = Object.keys(time)[0];
-                const numberOfTimes = time[firstCarNumber].length;
-
-                for (let i = 0; i < numberOfTimes; i++) {
-                    timeLabels.push(`Time ${i + 1}`);
-                }
-
-                for (const carNumber in time) {
-                    const carTimes = time[carNumber];
-                    const carDataset = {
-                        label: `Car ${carNumber}`,
-                        data: carTimes,
-                        borderColor: `hsl(${Math.random() * 360}, 100%, 50%)`,
-                        borderWidth: 1,
-                        fill: false,
-                    };
-                    timeDatasets.push(carDataset);
-                }
-
-                const timeChart = new Chart(document.getElementById('timeChart').getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: timeLabels,
-                        datasets: timeDatasets
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
-            }
-
-            // process class position data
-            if (Object.keys(classPosition).length === 0) {
-                console.error('No class position data found for the selected race.');
-            } else {
-                const requiredCars = Array.from({ length: 65 }, (_, i) => i);
-                requiredCars.forEach((carNumber) => {
-                    if (!(carNumber in classPosition)) {
-                        console.warn(`No class position data found for car number ${carNumber}`);
-                    }
-                });
-
-                const classPositionLabels = [];
-                const classPositionDatasets = [];
-
-                // Assuming that classPosition has the same number of position values for each car
-                const firstCarNumber = Object.keys(classPosition)[0];
-                const numberOfPositions = classPosition[firstCarNumber].length;
-
-                for (let i = 0; i < numberOfPositions; i++) {
-                    classPositionLabels.push(`Position ${i + 1}`);
-                }
-
-                for (const carNumber in classPosition) {
-                    const carPositions = classPosition[carNumber];
-                    const carDataset = {
-                        label: `Car ${carNumber}`,
-                        data: carPositions,
-                        borderColor: `hsl(${Math.random() * 360}, 100%, 50%)`,
-                        borderWidth: 1,
-                        fill: false,
-                    };
-                    classPositionDatasets.push(carDataset);
-                }
-
-                const classPositionChart = new Chart(document.getElementById('classPositionChart').getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: classPositionLabels,
-                        datasets: classPositionDatasets
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
-                    }
-                });
-            }
+            chartJSProcessing(lapTimes, 'lapTimeChart', 150);
+            chartJSProcessing(position, 'positionChart', 35);  // assuming 'positionChart' and 50
+            chartJSProcessing(airTemp, 'airTempChart', 40);  // assuming 'airTempChart' and 40
+            chartJSProcessing(trackTemp, 'trackTempChart', 60);  // assuming 'trackTempChart' and 60
+            chartJSProcessing(classPosition, 'classPositionChart', 10);  // assuming 'classPositionChart' and 10
+            chartJSProcessing(time, 'timeChart', 100);  // assuming 'timeChart' and 100
 
 
          }
