@@ -12,13 +12,16 @@ function chartJSProcessing(data, chartId, yAxisMax) {
         const labels = [];
         const datasets = [];
 
-        const firstCarNumber = Object.keys(data)[0];
-        console.log(`First car number for chart ${chartId}: ${firstCarNumber}`);  // Add this line
-
-        const carData = data[firstCarNumber];
-        console.log(`Car data for chart ${chartId}:`, carData);  // And this line
-
-        const numberOfLaps = carData.length;
+        let numberOfLaps = 0;
+        for (const carNumber in data) {
+            const carData = data[carNumber];
+            if (Array.isArray(carData)) {
+                numberOfLaps = Math.max(numberOfLaps, carData.length);
+            } else {
+                const maxLapNumber = Math.max(...Object.keys(carData).map(Number));
+                numberOfLaps = Math.max(numberOfLaps, maxLapNumber + 1);
+            }
+        }
 
         console.log(`Generating labels for chart: ${chartId}`);  // Log the chartId
         for (let i = 0; i < numberOfLaps; i++) {
@@ -31,12 +34,25 @@ function chartJSProcessing(data, chartId, yAxisMax) {
             const carData = data[carNumber];
             const carDataset = {
                 label: `Car ${carNumber}`,
-                data: carData,
+                data: [],
                 borderColor: `hsl(${Math.random() * 360}, 100%, 50%)`,
                 borderWidth: 1,
                 fill: false,
             };
             datasets.push(carDataset);
+
+            if (Array.isArray(carData)) {
+                for (let i = 0; i < carData.length; i++) {
+                    carDataset.data.push(carData[i]);
+                }
+            } else {
+                // If carData is an object, extract the values and sort them by the key (lap number)
+                const sortedValues = new Array(numberOfLaps).fill(null);
+                for (let lapNumber in carData) {
+                    sortedValues[Number(lapNumber)] = carData[lapNumber];
+                }
+                carDataset.data.push(...sortedValues);
+            }
         }
 
         const chart = new Chart(document.getElementById(chartId).getContext('2d'), {
@@ -46,7 +62,13 @@ function chartJSProcessing(data, chartId, yAxisMax) {
                 datasets: datasets,
             },
             options: {
-                animation: false,
+                animation: {
+                    duration: 0  // general animation time
+                },
+                hover: {
+                    animationDuration: 0  // duration of animations when hovering an item
+                },
+                responsiveAnimationDuration: 0,  // animation duration after a resize
                 scales: {
                     y: {
                         beginAtZero: false,
