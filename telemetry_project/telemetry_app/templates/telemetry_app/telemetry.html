@@ -9,6 +9,8 @@
     <title>Telemetry Data</title>
     <script src="{% static 'chart.js/dist/chart.umd.js' %}"></script>
     <script src="{% static 'telemetry_app/chart-processing.js' %}"></script>
+    <script src="{% static 'telemetry_app/storage-handling.js' %}"></script>
+
 
 </head>
 <body>
@@ -28,12 +30,12 @@
 </select>
 
 <!-- Add these input fields to your HTML -->
-<input id="lapTimeChartMax" type="number" value="150">
+<input id="lapTimeChartMax" type="number" value="650">
 <input id="positionChartMax" type="number" value="35">
-<input id="airTempChartMax" type="number" value="40">
-<input id="trackTempChartMax" type="number" value="60">
+<input id="airTempChartMax" type="number" value="20">
+<input id="trackTempChartMax" type="number" value="20">
 <input id="classPositionChartMax" type="number" value="10">
-<input id="timeChartMax" type="number" value="100">
+<input id="timeChartMax" type="number" value="1500">
 
 
 <div class="chart-container">
@@ -72,129 +74,118 @@
 
 
     <script>
-        window.onload = function () {
-            console.log('{{ lap_times|escapejs }}');
-            const lapTimesJson = '{{ lap_times|escapejs }}';
-            console.log('Lap times JSON:', lapTimesJson);
-            const lapTimes = JSON.parse(lapTimesJson) || {};
-            console.log('Lap times:', lapTimes);
+    window.onload = function () {
+        const lapTimesJson = '{{ lap_times|escapejs }}';
+        const lapTimes = JSON.parse(lapTimesJson) || {};
 
-            console.log('{{ position|escapejs }}');
-            const positionJson = '{{ position|escapejs }}';
-            console.log('Position JSON:', positionJson);
-            const position = JSON.parse(positionJson) || {};
-            console.log('Position:', position);
+        const positionJson = '{{ position|escapejs }}';
+        const position = JSON.parse(positionJson) || {};
 
-            console.log('{{ air_temp|escapejs }}');
-            const airTempJson = '{{ air_temp|escapejs }}';
-            console.log('Air temp JSON:', airTempJson);
-            const airTemp = JSON.parse(airTempJson) || {};
-            console.log('Air temp:', airTemp);
+        const airTempJson = '{{ air_temp|escapejs }}';
+        const airTemp = JSON.parse(airTempJson) || {};
 
-            console.log('{{ track_temp|escapejs }}');
-            const trackTempJson = '{{ track_temp|escapejs }}';
-            console.log('Track temp JSON:', trackTempJson);
-            const trackTemp = JSON.parse(trackTempJson) || {};
-            console.log('Track temp:', trackTemp);
+        const trackTempJson = '{{ track_temp|escapejs }}';
+        const trackTemp = JSON.parse(trackTempJson) || {};
 
-            console.log('{{ class_position|escapejs }}');
-            const classPositionJson = '{{ class_position|escapejs }}';
-            console.log('Class position JSON:', classPositionJson);
-            const classPosition = JSON.parse(classPositionJson) || {};
-            console.log('Class position:', classPosition);
+        const classPositionJson = '{{ class_position|escapejs }}';
+        const classPosition = JSON.parse(classPositionJson) || {};
 
-            console.log('{{ time|escapejs }}');
-            const timeJson = '{{ time|escapejs }}';
-            console.log('Time JSON:', timeJson);
-            const time = JSON.parse(timeJson) || {};
-            console.log('Time:', time);
+        const timeJson = '{{ time|escapejs }}';
+        const time = JSON.parse(timeJson) || {};
 
+        // Load the filter values from local storage, or use default values
+        const lapTimeChartMax = parseInt(loadFilter('lapTimeChartMax')) || 650;
+        const positionChartMax = parseInt(loadFilter('positionChartMax')) || 35;
+        const airTempChartMax = parseInt(loadFilter('airTempChartMax')) || 20;
+        const trackTempChartMax = parseInt(loadFilter('trackTempChartMax')) || 20;
+        const classPositionChartMax = parseInt(loadFilter('classPositionChartMax')) || 10;
+        const timeChartMax = parseInt(loadFilter('timeChartMax')) || 1500;
 
+        // Create the charts with the loaded filter values
+        chartJSProcessing(lapTimes, 'lapTimeChart', lapTimeChartMax, "Laptime Chart");
+        chartJSProcessing(position, 'positionChart', positionChartMax, "Position Chart");
+        chartJSProcessing(airTemp, 'airTempChart', airTempChartMax, "Airtemps from all cars");
+        chartJSProcessing(trackTemp, 'trackTempChart', trackTempChartMax, "Tracktemps from all cars");
+        chartJSProcessing(classPosition, 'classPositionChart', classPositionChartMax, "Class positions");
+        chartJSProcessing(time, 'timeChart', timeChartMax, "Time from leader");
 
-            // Get the input field values when calling the function
-             const lapTimeChartMax = parseInt(document.getElementById('lapTimeChartMax').value);
-            const positionChartMax = parseInt(document.getElementById('positionChartMax').value);
-            const airTempChartMax = parseInt(document.getElementById('airTempChartMax').value);
-            const trackTempChartMax = parseInt(document.getElementById('trackTempChartMax').value);
-            const classPositionChartMax = parseInt(document.getElementById('classPositionChartMax').value);
-            const timeChartMax = parseInt(document.getElementById('timeChartMax').value);
-
-            chartJSProcessing(lapTimes, 'lapTimeChart', lapTimeChartMax, "Laptime Chart");
-            chartJSProcessing(position, 'positionChart', positionChartMax, "Position Chart");
-            chartJSProcessing(airTemp, 'airTempChart', airTempChartMax, "Airtemps from all cars");
-            chartJSProcessing(trackTemp, 'trackTempChart', trackTempChartMax, "Tracktemps from all cars");
-            chartJSProcessing(classPosition, 'classPositionChart', classPositionChartMax, "Class positions");
-            chartJSProcessing(time, 'timeChart', timeChartMax, "Time from leader");
-
-            // Attach the onchange events
-            document.getElementById('lapTimeChartMax').onchange = function() {
-                const newMax = parseInt(this.value);
-                chartJSProcessing(lapTimes, 'lapTimeChart', newMax, "Laptime Chart");
-            }
-
-            document.getElementById('positionChartMax').onchange = function() {
-                const newMax = parseInt(this.value);
-                chartJSProcessing(position, 'positionChart', newMax, "Position Chart");
-            }
-
-            document.getElementById('airTempChartMax').onchange = function() {
-                const newMax = parseInt(this.value);
-                chartJSProcessing(airTemp, 'airTempChart', newMax, "Airtemps from all cars");
-            }
-
-            document.getElementById('trackTempChartMax').onchange = function() {
-                const newMax = parseInt(this.value);
-                chartJSProcessing(trackTemp, 'trackTempChart', newMax, "Tracktemps from all cars");
-            }
-
-            document.getElementById('classPositionChartMax').onchange = function() {
-                const newMax = parseInt(this.value);
-                chartJSProcessing(classPosition, 'classPositionChart', newMax, "Class positions");
-            }
-
-            document.getElementById('timeChartMax').onchange = function() {
-                const newMax = parseInt(this.value);
-                chartJSProcessing(time, 'timeChart', newMax, "Time from leader");
-            }
-
-            refreshData();
-
-
+        // When a filter value changes, save the new value and recreate the chart
+        document.getElementById('lapTimeChartMax').onchange = function() {
+            const newMax = parseInt(this.value);
+            saveFilter('lapTimeChartMax', newMax);
+            chartJSProcessing(lapTimes, 'lapTimeChart', newMax, "Laptime Chart");
         }
 
-        function refreshData() {
-            fetch(window.location.href)
-                .then(response => response.text())
-                .then(html => {
-                    const newDocument = new DOMParser().parseFromString(html, "text/html");
+        document.getElementById('positionChartMax').onchange = function() {
+            const newMax = parseInt(this.value);
+            saveFilter('positionChartMax', newMax);
+            chartJSProcessing(position, 'positionChart', newMax, "Position Chart");
+        }
 
-                    // Check if each element exists in the new document
-                    const raceForm = newDocument.getElementById("race-form");
-                    console.log('raceForm:', raceForm);
-                    if (raceForm) {
-                        document.getElementById("race-form").innerHTML = raceForm.innerHTML;
-                    }
+        document.getElementById('airTempChartMax').onchange = function() {
+            const newMax = parseInt(this.value);
+            saveFilter('airTempChartMax', newMax);
+            chartJSProcessing(airTemp, 'airTempChart', newMax, "Airtemps from all cars");
+        }
 
-                    const ids = ["lapTimeData", "positionData", "airTempData", "trackTempData", "classPositionData", "timeData"];
-                    for (let id of ids) {
-                        const element = newDocument.getElementById(id);
-                        console.log(`${id}:`, element);
-                        if (element) {
-                            document.getElementById(id).innerHTML = element.innerHTML;
-                        }
-                    }
+        document.getElementById('trackTempChartMax').onchange = function() {
+            const newMax = parseInt(this.value);
+            saveFilter('trackTempChartMax', newMax);
+            chartJSProcessing(trackTemp, 'trackTempChart', newMax, "Tracktemps from all cars");
+        }
 
-                    setTimeout(refreshData, 15000);
-                });
+        document.getElementById('classPositionChartMax').onchange = function() {
+            const newMax = parseInt(this.value);
+            saveFilter('classPositionChartMax', newMax);
+            chartJSProcessing(classPosition, 'classPositionChart');
         }
 
 
+        document.getElementById('classPositionChartMax').onchange = function() {
+            const newMax = parseInt(this.value);
+            saveFilter('classPositionChartMax', newMax);
+            chartJSProcessing(classPosition, 'classPositionChart', newMax, "Class positions");
+        }
 
+        document.getElementById('timeChartMax').onchange = function() {
+            const newMax = parseInt(this.value);
+            saveFilter('timeChartMax', newMax);
+            chartJSProcessing(time, 'timeChart', newMax, "Time from leader");
+        }
 
+        // Continuously refresh the data
+        refreshData();
+    }
 
+    // Load a filter value from local storage
+    function loadFilter(name) {
+        return localStorage.getItem(name);
+    }
 
+    // Save a filter value to local storage
+    function saveFilter(name, value) {
+        localStorage.setItem(name, value);
+    }
 
-    </script>
+    function refreshData() {
+        fetch(window.location.href)
+            .then(response => response.text())
+            .then(html => {
+                const newDocument = new DOMParser().parseFromString(html, "text/html");
+
+                const ids = ["lapTimeData", "positionData", "airTempData", "trackTempData", "classPositionData", "timeData"];
+                for (let id of ids) {
+                    const element = newDocument.getElementById(id);
+                    if (element) {
+                        document.getElementById(id).innerHTML = element.innerHTML;
+                    }
+                }
+
+                setTimeout(refreshData, 15000);
+            });
+    }
+</script>
+
 
 
 </body>

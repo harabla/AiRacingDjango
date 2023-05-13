@@ -24,23 +24,39 @@ def process_data(data):
     else:
         return {}
 
+def get_car_numbers(race_id):
+    ref = db.reference(f"racesTest2/{race_id}/competitorData")
+    competitor_data = ref.get()
+    if competitor_data is not None:
+        return list(competitor_data.keys())
+    else:
+        return []
+
 def get_chart_data(request, field_name, race_id):
     ref = db.reference(f"racesTest2/{race_id}/competitorData")
     competitor_data = ref.get()
 
+    # filter competitor_data to only include items that are dictionaries
+    competitor_data = {k: v for k, v in competitor_data.items() if isinstance(v, dict)}
+
     chart_data = {}
-    if competitor_data is not None:
-        for index, car_data in enumerate(competitor_data):
-            car_number = index + 1
-            if isinstance(car_data, dict) and 'RACE' in car_data and field_name in car_data['RACE']:
+
+    car_numbers = get_car_numbers(race_id)
+    for car_number in car_numbers:
+        car_data = competitor_data[car_number]
+        if 'RACE' in car_data:
+            if field_name in car_data['RACE']:
                 raw_data = car_data['RACE'][field_name]
                 print(f"Raw data for {field_name}: {raw_data}")  # print the raw data
                 processed_data = process_data(raw_data)
                 chart_data[car_number] = processed_data
+            else:
+                print(f"Field name {field_name} not in car_data['RACE']")
+        else:
+            print("'RACE' not in car_data")
 
     corrected_chart_data = json.dumps(chart_data, default=str).replace("'", '"')
     return corrected_chart_data
-
 
 def telemetry(request):
     race_ids = get_race_ids()

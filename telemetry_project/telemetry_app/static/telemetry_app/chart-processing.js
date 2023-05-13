@@ -1,6 +1,7 @@
 let charts = {};  // Global variable to store chart instances
+let chartColors = {}; // Store chart colors
 
-function chartJSProcessing(data, chartId, yAxisMax, chartTitle) { // <- Add chartTitle parameter here
+function chartJSProcessing(data, chartId, yAxisMax, chartTitle) {
     const carSelector = document.getElementById('car-selector');
 
     // Remove all options from the previous race
@@ -9,7 +10,6 @@ function chartJSProcessing(data, chartId, yAxisMax, chartTitle) { // <- Add char
     if (Object.keys(data).length === 0) {
         console.error('No data found for the selected race.');
     } else {
-        // Populate the dropdown with car numbers
         const carNumbers = Object.keys(data);
         for (const carNumber of carNumbers) {
             const option = document.createElement('option');
@@ -39,14 +39,16 @@ function chartJSProcessing(data, chartId, yAxisMax, chartTitle) { // <- Add char
 
         for (const carNumber in data) {
             const carData = data[carNumber];
+            const carColor = loadColor(carNumber) || `hsl(${Math.random() * 360}, 100%, 50%)`;
             const carDataset = {
                 label: `Car ${carNumber}`,
                 data: [],
-                borderColor: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                borderColor: carColor,
                 borderWidth: 1,
                 fill: false,
             };
             datasets.push(carDataset);
+            saveColor(carNumber, carColor);
 
             if (Array.isArray(carData)) {
                 for (let i = 0; i < carData.length; i++) {
@@ -66,7 +68,6 @@ function chartJSProcessing(data, chartId, yAxisMax, chartTitle) { // <- Add char
             charts[chartId].destroy();
         }
 
-        // Create a new chart and store it in the charts variable
         const chart = new Chart(document.getElementById(chartId).getContext('2d'), {
             type: 'line',
             data: {
@@ -88,7 +89,7 @@ function chartJSProcessing(data, chartId, yAxisMax, chartTitle) { // <- Add char
                     },
                 },
                 plugins: {
-                    title: { // <- Use chartTitle parameter here
+                    title: {
                         display: true,
                         text: chartTitle,
                         font: {
@@ -102,15 +103,12 @@ function chartJSProcessing(data, chartId, yAxisMax, chartTitle) { // <- Add char
 
         charts[chartId] = chart;
 
-                // Add an event listener to the dropdown
-        carSelector.addEventListener('change', function() {
-            // Reset all dataset styles
+                carSelector.addEventListener('change', function() {
             for (const dataset of chart.data.datasets) {
                 dataset.borderWidth = 1;
-                dataset.borderColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                dataset.borderColor = loadColor(dataset.label.split(' ')[1]);
             }
 
-            // If a car is selected, bolden its line
             const selectedCarNumber = this.value;
             if (selectedCarNumber) {
                 for (const dataset of chart.data.datasets) {
